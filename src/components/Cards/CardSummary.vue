@@ -1,0 +1,37 @@
+<script setup>
+import axios from "axios";
+
+import { onMounted, ref } from "vue";
+const BASE_URL = "https://api.github.com/users";
+const user = ref("");
+const getUser = async () => {
+  const res = await axios.get(`${BASE_URL}/deivit24`);
+  user.value = res.data;
+};
+onMounted(async () => {
+  await getUser();
+});
+</script>
+
+<template>
+  <v-card class="mx-auto" max-width="344" color="#e4e4e4">
+    <v-img height="250" cover :src="user.avatar_url"></v-img>
+
+    <h1 class="text-center font-weight-light mt-5">{{ user.name }}</h1>
+    <p class="text-center mb-1">{{ user.bio }}</p>
+    <p class="text-center">
+      <v-icon small>mdi-map-marker</v-icon> {{ user.location }}
+      <v-icon class="ml-5" small>mdi-office-building-marker-outline</v-icon>
+      {{ user.company }}
+    </p>
+
+    <v-divider class="mx-4"></v-divider>
+    <v-card-text>
+      <div class="mb-2">
+        Senior Software Engineer with strong experience in JavaScript/Node,
+        Python, Postgres, data engineering, infrastructure, and architecting
+        solutions.
+      </div>
+    </v-card-text>
+  </v-card>
+</template>
