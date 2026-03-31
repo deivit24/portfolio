@@ -21,9 +21,9 @@ const CYCLE_MS       = 10000 // ms between cascades
 function bl() { return '[]'.repeat(NAV_COLS / 2) }
 
 function navItem(label, opts = {}) {
-  const suffix = ` ${label} ++`
-  const pre    = '+'.repeat(Math.max(0, NAV_COLS - suffix.length))
-  return { type: 'item', pre, label, post: '++', ...opts }
+  const suffix = ` ${label} ※※`
+  const pre    = '※'.repeat(Math.max(0, NAV_COLS - suffix.length))
+  return { type: 'item', pre, label, post: '※※', ...opts }
 }
 
 const BR = { type: 'br' }
@@ -51,8 +51,8 @@ const NAV = computed(() => {
   let ci = 0
 
   function skillLine(label) {
-    const pre      = '+++ '
-    const trail    = '+'.repeat(Math.max(0, NAV_COLS - (pre + label + ' ').length))
+    const pre      = '※※※ '
+    const trail    = '※'.repeat(Math.max(0, NAV_COLS - (pre + label + ' ').length))
     const fullText = pre + label + ' ' + trail
     const preLen   = pre.length
     const chars    = [...fullText].map((ch, li) => ({

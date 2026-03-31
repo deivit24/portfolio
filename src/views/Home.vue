@@ -5,7 +5,8 @@ import { RouterLink } from 'vue-router'
 const FONT_SIZE_DESKTOP = 13
 const FONT_SIZE_MOBILE  = 10
 const LINE_HEIGHT = 1.35
-const WORD_PAD = '      ' // 4-space breathing room on each side of a word
+const WORD_PAD = '    ' // 4-space breathing room on each side of a word
+const MAX_W = 1600
 
 const vw = ref(window.innerWidth)
 const vh = ref(window.innerHeight)
@@ -21,22 +22,23 @@ const isMobile = computed(() => vw.value < 600)
 const padding  = computed(() => isMobile.value ? 15 : 40)
 const fontSize = computed(() => isMobile.value ? FONT_SIZE_MOBILE : FONT_SIZE_DESKTOP)
 
-// Monospace: char width ≈ 0.601 × font size (Courier New)
+// Monospace: ASCII char width ≈ 0.601 × font size (Courier New)
+// 「」 are CJK full-width chars — each ≈ 1em wide, so a pair ≈ fontSize × 2
 const charW    = computed(() => fontSize.value * 0.601)
-const bracketW = computed(() => charW.value * 2) // width of one '[]' pair
+const bracketW = computed(() => fontSize.value * 2)
 
-// Available content area after subtracting padding on both sides
-const innerW = computed(() => vw.value - padding.value * 2)
+// Available content area after subtracting padding on both sides (capped at MAX_W)
+const innerW = computed(() => Math.min(vw.value, MAX_W) - padding.value * 2)
 const innerH = computed(() => vh.value - padding.value * 2)
 
 const WORDS = [
   { rowPct: 7,  colPct: 4,  mobileColPct: 4,  text: 'David Salazar',    bold: true, link: '/about' },
-  { rowPct: 7,  colPct: 22, mobileColPct: 22, text: '<<=====' },
-  { rowPct: 21, colPct: 52, mobileColPct: 18, text: 'Software Engineer' },
-  { rowPct: 36, colPct: 8,  mobileColPct: 8,  text: 'Data Engineer'     },
+  { rowPct: 7,  colPct: 22, mobileColPct: 22, text: '<<===' },
+  { rowPct: 21, colPct: 31, mobileColPct: 18, text: 'Software Engineer' },
+  { rowPct: 36, colPct: 5,  mobileColPct: 8,  text: 'Data Engineer'     },
   { rowPct: 50, colPct: 71, mobileColPct: 5,  text: 'Python'            },
-  { rowPct: 63, colPct: 27, mobileColPct: 12, text: 'Javascript'        },
-  { rowPct: 78, colPct: 63, mobileColPct: 5,  text: 'Architect'         },
+  { rowPct: 63, colPct: 30, mobileColPct: 12, text: 'Javascript'        },
+  { rowPct: 78, colPct: 18, mobileColPct: 5,  text: 'Architect'         },
 ]
 
 const lines = computed(() => {
@@ -53,7 +55,7 @@ const lines = computed(() => {
     )
 
     if (!wordsOnRow.length) {
-      result.push([{ type: 'b', text: '[]'.repeat(totalCols) }])
+      result.push([{ type: 'b', text: '「」'.repeat(totalCols) }])
       continue
     }
 
@@ -70,22 +72,23 @@ const lines = computed(() => {
       const pct      = mobile && w.mobileColPct != null ? w.mobileColPct : w.colPct
       // padded text includes breathing spaces
       const padded   = `${WORD_PAD}${w.text}${WORD_PAD}`
+      // how many bracket-pair columns the ASCII word actually consumes
+      const wordCols = Math.ceil((padded.length * charW.value) / bracketW.value)
       // clamp so padded word fits inside the grid
-      const maxStart = totalCols - Math.ceil(padded.length / 2) - 1
+      const maxStart = totalCols - wordCols - 1
       const wordCol  = Math.min(Math.floor((pct / 100) * totalCols), maxStart)
 
       if (wordCol > cursor) {
-        segs.push({ type: 'b', text: '[]'.repeat(wordCol - cursor) })
+        segs.push({ type: 'b', text: '「」'.repeat(wordCol - cursor) })
       }
 
       segs.push({ type: 'w', text: padded, bold: w.bold || false, link: w.link })
 
-      // each char ≈ 0.5 bracket-pair width → length chars ≈ length/2 pairs
-      cursor = wordCol + Math.ceil(padded.length / 2)
+      cursor = wordCol + wordCols
     }
 
     if (cursor < totalCols) {
-      segs.push({ type: 'b', text: '[]'.repeat(totalCols - cursor) })
+      segs.push({ type: 'b', text: '「」'.repeat(totalCols - cursor) })
     }
 
     result.push(segs)
@@ -120,8 +123,10 @@ const lines = computed(() => {
 
 <style scoped>
 .page {
-  width: 100vw;
+  max-width: 1600px;
+  width: 100%;
   height: 100vh;
+  margin: 0 auto;
   background: #fff;
   box-sizing: border-box;
   overflow: hidden;

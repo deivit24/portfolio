@@ -272,6 +272,8 @@ function dateRange(exp) {
   grid-template-areas: "nav timeline bio";
   gap: 50px;
   align-items: start;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 .col-nav  { grid-area: nav; }
