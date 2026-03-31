@@ -114,6 +114,8 @@ const CONTACTS = [
   grid-template-columns: 250px 1fr;
   gap: 50px;
   align-items: start;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 @media (max-width: 599px) {
