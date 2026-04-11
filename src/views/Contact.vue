@@ -1,4 +1,6 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 import NavSidebar from '../components/NavSidebar.vue'
 import resumeUrl from '../assets/David_Salazar_Resume_2026.pdf?url'
 
@@ -49,17 +51,74 @@ const CONTACTS = [
     href:  'https://www.instagram.com/deivit24',
   },
 ]
+
+const SKILLS = [
+  'Python',
+  'JavaScript',
+  'Vue / React',
+  'Django / FastAPI',
+  'REST APIs',
+  'SQL',
+  'Data Engineering',
+  'ETL',
+  'Kafka',
+  'Snowflake / Databricks',
+  'AWS',
+  'Docker',
+  'Git',
+  'Claude',
+]
+
+const showMobileSkills = ref(false)
+
+const isMobile = ref(false)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 599
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <template>
   <div class="page">
+
+    <!-- Mobile-only top tabs -->
+    <div class="mobile-tabs">
+      <RouterLink to="/about" class="tab-item">[ PROFILE ]</RouterLink>
+      <button class="tab-item" :class="{ active: !showMobileSkills }" @click="showMobileSkills = false">[ CONTACT ]</button>
+      <button
+        class="tab-item"
+        :class="{ active: showMobileSkills }"
+        @click="showMobileSkills = !showMobileSkills"
+      >[ SKILLS ]</button>
+    </div>
+
     <div class="layout">
 
       <aside class="col-nav">
         <NavSidebar active="contact" />
       </aside>
 
-      <main class="contact">
+      <!-- Skills panel (mobile only) -->
+      <section v-if="showMobileSkills" class="skills-panel">
+        <p class="heading">[ Skills ]</p>
+        <div class="gap" />
+        <ul class="skills-list">
+          <li v-for="skill in SKILLS" :key="skill">
+            <span class="skill-prefix">※※※ </span>{{ skill }}
+          </li>
+        </ul>
+      </section>
+
+      <main v-else class="contact">
         <h1 class="heading">[ David Salazar ]</h1>
 
         <div class="gap" />
@@ -108,6 +167,37 @@ const CONTACTS = [
   box-sizing: border-box;
 }
 
+/* ── Mobile tabs ─────────────────────────────────── */
+.mobile-tabs {
+  display: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #000;
+}
+
+.tab-item {
+  color: #000;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.04em;
+  transition: color 0.12s ease;
+}
+
+.tab-item.active,
+.tab-item:hover {
+  color: orangered;
+}
+
 /* ── Grid layout ─────────────────────────────────── */
 .layout {
   display: grid;
@@ -121,6 +211,8 @@ const CONTACTS = [
 @media (max-width: 599px) {
   .page   { padding: 15px; }
   .layout { grid-template-columns: 1fr; gap: 24px; }
+  .mobile-tabs { display: flex; }
+  .col-nav { display: none; }
 }
 
 /* ── Heading ─────────────────────────────────────── */
@@ -195,6 +287,30 @@ const CONTACTS = [
 .resume-btn:hover {
   background: #000;
   color: #fff;
+}
+
+/* ── Skills panel (mobile) ───────────────────────── */
+.skills-panel {
+  padding-top: 4px;
+}
+
+.skills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  line-height: 2;
+}
+
+.skills-list li {
+  display: flex;
+  align-items: baseline;
+}
+
+.skill-prefix {
+  color: orangered;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-right: 0.3em;
 }
 
 /* ── Spacing ─────────────────────────────────────── */

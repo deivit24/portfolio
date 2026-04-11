@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { RouterLink } from 'vue-router'
 import NavSidebar from '../components/NavSidebar.vue'
 
 // type: 'edu' | 'work'
@@ -111,15 +112,87 @@ const EXPERIENCE = [
   },
 ]
 
-const hoveredWork = ref(null)
+const SKILLS = [
+  'Python',
+  'JavaScript',
+  'Vue / React',
+  'Django / FastAPI',
+  'REST APIs',
+  'SQL',
+  'Data Engineering',
+  'ETL',
+  'Kafka',
+  'Snowflake / Databricks',
+  'AWS',
+  'Docker',
+  'Git',
+  'Claude',
+]
+
+const hoveredWork       = ref(null)
+const bioRef            = ref(null)
+const showMobileSkills  = ref(false)
+const isMobile          = ref(false)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 599
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 function dateRange(exp) {
   return exp.end ? `${exp.start} – ${exp.end}` : `${exp.start} – Present`
+}
+
+function handleExpClick(exp) {
+  if (!exp.bullets && !exp.bio) return
+  if (!isMobile.value) return
+  hoveredWork.value      = exp
+  showMobileSkills.value = false
+  nextTick(() => {
+    bioRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+function selectProfileTab() {
+  hoveredWork.value      = null
+  showMobileSkills.value = false
+}
+
+function selectSkillsTab() {
+  showMobileSkills.value = true
+  hoveredWork.value      = null
+  nextTick(() => {
+    bioRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
 }
 </script>
 
 <template>
   <div class="page">
+
+    <!-- Mobile-only top tabs -->
+    <div class="mobile-tabs">
+      <button
+        class="tab-item"
+        :class="{ active: !showMobileSkills }"
+        @click="selectProfileTab"
+      >[ PROFILE ]</button>
+      <RouterLink to="/contact" class="tab-item">[ CONTACT ]</RouterLink>
+      <button
+        class="tab-item"
+        :class="{ active: showMobileSkills }"
+        @click="selectSkillsTab"
+      >[ SKILLS ]</button>
+    </div>
+
     <div class="layout">
 
       <aside class="col-nav">
@@ -130,7 +203,13 @@ function dateRange(exp) {
       <section class="timeline">
           <p class="section-name">[ David Salazar ]</p>
           <div class="gap-xl" />
-          <p class="timeline-hint">[ hover entries to explore ]</p>
+          <!-- legend -->
+          <div class="legend">
+            <span class="exp-tag edu">[E]</span> Education &nbsp;&nbsp;
+            <span class="exp-tag work">[W]</span> Work
+          </div>
+          <div class="gap-sm" />
+          <p class="timeline-hint">[ {{ isMobile ? 'click' : 'hover' }} entries to explore ]</p>
           <div class="gap-md" />
 
           <div
@@ -138,8 +217,9 @@ function dateRange(exp) {
             :key="i"
             class="exp-block"
             :class="{ interactive: exp.bullets || exp.bio }"
-            @mouseenter="(exp.bullets || exp.bio) ? hoveredWork = exp : null"
-            @mouseleave="(exp.bullets || exp.bio) ? hoveredWork = null : null"
+            @mouseenter="(exp.bullets || exp.bio) && !isMobile ? hoveredWork = exp : null"
+            @mouseleave="(exp.bullets || exp.bio) && !isMobile ? hoveredWork = null : null"
+            @click="handleExpClick(exp)"
           >
             <!-- type badge + date range -->
             <div class="exp-header">
@@ -157,19 +237,25 @@ function dateRange(exp) {
             <div class="gap-md" />
           </div>
 
-          <!-- legend -->
-          <div class="legend">
-            <span class="exp-tag edu">[E]</span> Education &nbsp;&nbsp;
-            <span class="exp-tag work">[W]</span> Work
-          </div>
         </section>
 
-        <!-- Right: who am I / hovered work detail -->
-        <section class="bio">
+        <!-- Right: who am I / skills / hovered work detail -->
+        <section ref="bioRef" class="bio">
           <Transition name="bio-fade" mode="out-in">
 
-            <!-- Hovered entry -->
-            <div v-if="hoveredWork" :key="hoveredWork.org + hoveredWork.role">
+            <!-- Mobile: Skills view -->
+            <div v-if="showMobileSkills" key="mobile-skills">
+              <p class="section-name">[ Skills ]</p>
+              <div class="gap-xl" />
+              <ul class="skills-list">
+                <li v-for="skill in SKILLS" :key="skill">
+                  <span class="skill-prefix">※※※ </span>{{ skill }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Hovered / clicked entry -->
+            <div v-else-if="hoveredWork" :key="hoveredWork.org + hoveredWork.role">
               <p class="section-name">{{ hoveredWork.org }}</p>
               <div class="gap-sm" />
               <p class="bio-role-title">{{ hoveredWork.role }} &nbsp;·&nbsp; {{ dateRange(hoveredWork) }}</p>
@@ -265,6 +351,37 @@ function dateRange(exp) {
   box-sizing: border-box;
 }
 
+/* ── Mobile tabs ─────────────────────────────────────── */
+.mobile-tabs {
+  display: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #000;
+}
+
+.tab-item {
+  color: #000;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.04em;
+  transition: color 0.12s ease;
+}
+
+.tab-item.active,
+.tab-item:hover {
+  color: orangered;
+}
+
 /* ── Grid layout ─────────────────────────────────────── */
 .layout {
   display: grid;
@@ -278,7 +395,7 @@ function dateRange(exp) {
 
 .col-nav  { grid-area: nav; }
 .timeline { grid-area: timeline; }
-.bio      { grid-area: bio; }
+.bio      { grid-area: bio; position: sticky; top: 40px; }
 
 /* Tablet: nav left, bio above timeline on right */
 @media (max-width: 900px) {
@@ -292,18 +409,23 @@ function dateRange(exp) {
   .col-nav { grid-row: 1 / 3; }
 }
 
-/* Mobile: single column */
+/* Mobile: single column, no sidebar */
 @media (max-width: 599px) {
   .page { padding: 15px; }
+
+  .mobile-tabs { display: flex; }
+
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "nav"
       "bio"
       "timeline";
     gap: 24px;
   }
-  .col-nav { grid-row: auto; }
+
+  .col-nav { display: none; }
+
+  .bio { position: static; }
 }
 
 /* ── Section heading ─────────────────────────────────── */
@@ -370,6 +492,23 @@ function dateRange(exp) {
 
 .bio-city { font-weight: 700; }
 
+/* ── Skills list (mobile) ────────────────────────────── */
+.skills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  line-height: 2;
+}
+
+.skills-list li { display: flex; align-items: baseline; }
+
+.skill-prefix {
+  color: orangered;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-right: 0.3em;
+}
+
 /* ── Timeline hint ───────────────────────────────────── */
 .timeline-hint {
   font-size: 10px;
@@ -415,5 +554,4 @@ function dateRange(exp) {
 .gap-xl { height: 1.8em; }
 .gap-md { height: 1em; }
 .gap-sm { height: 0.5em; }
-
 </style>
